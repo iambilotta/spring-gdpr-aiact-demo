@@ -13,9 +13,12 @@
 
 ## Why this repo exists
 
-If you read [`spring-aiact`](https://github.com/iambilotta/spring-aiact) and [`spring-gdpr`](https://github.com/iambilotta/spring-gdpr) and wondered "does this actually do what the README claims", this repo is the answer. It boots both libraries on `:8080`, persists to in-memory H2, and ships three integration tests that assert the libraries' observable output against the upstream `v1.0.0` artifacts pulled from JitPack.
+If you read [`spring-aiact`](https://github.com/iambilotta/spring-aiact) and [`spring-gdpr`](https://github.com/iambilotta/spring-gdpr) and wondered "does this actually do what the README claims", this repo is the answer. It boots both libraries on `:8080`, persists to in-memory H2, and ships three integration tests that assert the libraries' observable output against the upstream `v1.1.0` artifacts pulled from JitPack.
 
-Output captured below comes verbatim from a real run.
+**The build-time and runtime artifacts produced by a real run are committed under [`evidence/`](evidence/),** so you can see what the libraries do without cloning, building or booting anything. Direct links:
+
+- Build-time: [`evidence/build-time/ropa.csv`](evidence/build-time/ropa.csv), [`evidence/build-time/dpia.md`](evidence/build-time/dpia.md), [`evidence/build-time/hiring-screener-technical-file.md`](evidence/build-time/hiring-screener-technical-file.md), [`evidence/build-time/hiring-screener-doc.pdf`](evidence/build-time/hiring-screener-doc.pdf), [`evidence/build-time/hiring-screener-dataset-cv-corpus-2025.md`](evidence/build-time/hiring-screener-dataset-cv-corpus-2025.md).
+- Runtime: [`evidence/runtime/hiring-screener.ndjson`](evidence/runtime/hiring-screener.ndjson), [`evidence/runtime/aiact-log-verify.json`](evidence/runtime/aiact-log-verify.json), [`evidence/runtime/aiact-log-head.json`](evidence/runtime/aiact-log-head.json).
 
 ---
 
@@ -41,8 +44,8 @@ Output captured below comes verbatim from a real run.
 ```bash
 git clone git@github.com:iambilotta/spring-gdpr-aiact-demo.git
 cd spring-gdpr-aiact-demo
-mvn -B verify              # builds, runs integration tests against upstream v1.0.0 from JitPack
-java -jar target/spring-gdpr-aiact-demo-1.0.0.jar
+mvn -B verify              # builds, runs integration tests against upstream v1.1.0 from JitPack
+java -jar target/spring-gdpr-aiact-demo-1.1.0.jar
 ```
 
 App binds on `:8080`. Audit logs written under `./aiact-logs/`. H2 console at `/h2-console`.
@@ -50,9 +53,9 @@ App binds on `:8080`. Audit logs written under `./aiact-logs/`. H2 console at `/
 The first build downloads the upstream libraries from JitPack:
 
 ```
-com.github.iambilotta.spring-aiact:spring-aiact-spring-boot-starter:v1.0.0
-com.github.iambilotta.spring-gdpr:spring-gdpr-starter:v1.0.0
-com.github.iambilotta.spring-gdpr:spring-gdpr-annotations:v1.0.0
+com.github.iambilotta.spring-aiact:spring-aiact-spring-boot-starter:v1.1.0
+com.github.iambilotta.spring-gdpr:spring-gdpr-starter:v1.1.0
+com.github.iambilotta.spring-gdpr:spring-gdpr-annotations:v1.1.0
 ```
 
 JitPack lazily builds these on the first request, which can take a couple of minutes the first time only. Subsequent builds are instant.

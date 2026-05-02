@@ -13,7 +13,7 @@
 
     <groupId>com.iambilotta.demo</groupId>
     <artifactId>spring-gdpr-aiact-demo</artifactId>
-    <version>1.0.0</version>
+    <version>1.1.0</version>
     <packaging>jar</packaging>
 
     <name>spring-gdpr-aiact-demo</name>
@@ -43,8 +43,8 @@
 
     <properties>
         <java.version>21</java.version>
-        <spring-aiact.version>v1.0.0</spring-aiact.version>
-        <spring-gdpr.version>v1.0.0</spring-gdpr.version>
+        <spring-aiact.version>v1.1.0</spring-aiact.version>
+        <spring-gdpr.version>v1.1.0</spring-gdpr.version>
     </properties>
 
     <repositories>
@@ -167,7 +167,7 @@
                     <plugin>
                         <groupId>com.iambilotta.spring</groupId>
                         <artifactId>spring-aiact-maven-plugin</artifactId>
-                        <version>1.0.0</version>
+                        <version>1.1.0</version>
                         <executions>
                             <execution>
                                 <id>aiact-verify-and-generate</id>

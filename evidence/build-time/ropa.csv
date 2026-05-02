@@ -1,0 +1,2 @@
+entity,data_subjects,legal_basis,retention_period,strategy,special_category
+com.iambilotta.demo.Customer,customer,6(1)(b),P5Y,ANONYMIZE,false

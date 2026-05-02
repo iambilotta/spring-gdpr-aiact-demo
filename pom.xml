@@ -7,13 +7,13 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.5.0</version>
+        <version>4.0.5</version>
         <relativePath/>
     </parent>
 
     <groupId>com.iambilotta.demo</groupId>
     <artifactId>spring-gdpr-aiact-demo</artifactId>
-    <version>1.1.0</version>
+    <version>2.0.0</version>
     <packaging>jar</packaging>
 
     <name>spring-gdpr-aiact-demo</name>
@@ -43,11 +43,21 @@
 
     <properties>
         <java.version>21</java.version>
-        <spring-aiact.version>v1.1.0</spring-aiact.version>
-        <spring-gdpr.version>v1.1.0</spring-gdpr.version>
+        <spring-aiact.version>v2.0.0</spring-aiact.version>
+        <spring-gdpr.version>v2.0.0</spring-gdpr.version>
     </properties>
 
     <repositories>
+        <!-- Central listed explicitly first so transitive deps (e.g. openpdf 3.x)
+             resolve from Maven Central, not from JitPack's own re-build. JitPack
+             auto-builds tags of public GitHub repos under com.github.{user}.{repo}
+             which would otherwise shadow third-party deps with a different groupId. -->
+        <repository>
+            <id>central</id>
+            <url>https://repo.maven.apache.org/maven2</url>
+            <releases><enabled>true</enabled></releases>
+            <snapshots><enabled>false</enabled></snapshots>
+        </repository>
         <repository>
             <id>jitpack.io</id>
             <url>https://jitpack.io</url>
@@ -100,6 +110,11 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-webmvc-test</artifactId>
             <scope>test</scope>
         </dependency>
     </dependencies>
@@ -167,7 +182,7 @@
                     <plugin>
                         <groupId>com.iambilotta.spring</groupId>
                         <artifactId>spring-aiact-maven-plugin</artifactId>
-                        <version>1.1.0</version>
+                        <version>2.0.0</version>
                         <executions>
                             <execution>
                                 <id>aiact-verify-and-generate</id>

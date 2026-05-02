@@ -1,0 +1,59 @@
+spring:
+  profiles:
+    active: dev
+  datasource:
+    url: jdbc:h2:mem:demo;DB_CLOSE_DELAY=-1
+    username: sa
+    password: ""
+    driver-class-name: org.h2.Driver
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    properties:
+      hibernate:
+        format_sql: true
+  h2:
+    console:
+      enabled: true
+  gdpr:
+    enabled: true
+    web:
+      base-path: /gdpr
+    audit:
+      jdbc-enabled: true
+      table: gdpr_audit_access
+      auto-create-schema: true
+      async:
+        enabled: true
+        thread-count: 1
+        queue-capacity: 1024
+    retention:
+      enabled: false
+    erasure:
+      rest-enabled: true
+
+aiact:
+  hmac:
+    secret: dev-only-secret-not-for-prod-${random.uuid}
+  log-dir: ./aiact-logs
+  retention: P10Y
+  audit:
+    single-writer-lock: true
+  endpoints:
+    enabled: true
+    base-path: /aiact
+    allow-without-guard: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: always
+
+logging:
+  level:
+    com.iambilotta: INFO
+    gdpr.audit: INFO

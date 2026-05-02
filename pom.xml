@@ -48,6 +48,16 @@
     </properties>
 
     <repositories>
+        <!-- Central listed explicitly first so transitive deps (e.g. openpdf 3.x)
+             resolve from Maven Central, not from JitPack's own re-build. JitPack
+             auto-builds tags of public GitHub repos under com.github.{user}.{repo}
+             which would otherwise shadow third-party deps with a different groupId. -->
+        <repository>
+            <id>central</id>
+            <url>https://repo.maven.apache.org/maven2</url>
+            <releases><enabled>true</enabled></releases>
+            <snapshots><enabled>false</enabled></snapshots>
+        </repository>
         <repository>
             <id>jitpack.io</id>
             <url>https://jitpack.io</url>

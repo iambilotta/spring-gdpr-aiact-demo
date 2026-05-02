@@ -12,18 +12,54 @@
     </parent>
 
     <groupId>com.iambilotta.demo</groupId>
-    <artifactId>iambilotta-compliance-demo</artifactId>
-    <version>0.1.0-SNAPSHOT</version>
+    <artifactId>spring-gdpr-aiact-demo</artifactId>
+    <version>1.0.0</version>
     <packaging>jar</packaging>
 
-    <name>iambilotta-compliance-demo</name>
-    <description>End-to-end demo: spring-aiact + spring-gdpr in one Spring Boot service.</description>
+    <name>spring-gdpr-aiact-demo</name>
+    <description>End-to-end demo of spring-aiact + spring-gdpr running together in a single Spring Boot service.</description>
+    <url>https://github.com/iambilotta/spring-gdpr-aiact-demo</url>
+
+    <licenses>
+        <license>
+            <name>Apache License, Version 2.0</name>
+            <url>https://www.apache.org/licenses/LICENSE-2.0</url>
+        </license>
+    </licenses>
+
+    <developers>
+        <developer>
+            <name>Francesco Bilotta</name>
+            <email>francesco@iambilotta.com</email>
+            <url>https://iambilotta.com</url>
+        </developer>
+    </developers>
+
+    <scm>
+        <url>https://github.com/iambilotta/spring-gdpr-aiact-demo</url>
+        <connection>scm:git:git@github.com:iambilotta/spring-gdpr-aiact-demo.git</connection>
+        <developerConnection>scm:git:git@github.com:iambilotta/spring-gdpr-aiact-demo.git</developerConnection>
+    </scm>
 
     <properties>
         <java.version>21</java.version>
-        <spring-aiact.version>0.1.1</spring-aiact.version>
-        <spring-gdpr.version>0.1.1</spring-gdpr.version>
+        <spring-aiact.version>v1.0.0</spring-aiact.version>
+        <spring-gdpr.version>v1.0.0</spring-gdpr.version>
     </properties>
+
+    <repositories>
+        <repository>
+            <id>jitpack.io</id>
+            <url>https://jitpack.io</url>
+        </repository>
+    </repositories>
+
+    <pluginRepositories>
+        <pluginRepository>
+            <id>jitpack.io</id>
+            <url>https://jitpack.io</url>
+        </pluginRepository>
+    </pluginRepositories>
 
     <dependencies>
         <dependency>
@@ -45,20 +81,26 @@
         </dependency>
 
         <dependency>
-            <groupId>com.iambilotta.spring</groupId>
+            <groupId>com.github.iambilotta.spring-aiact</groupId>
             <artifactId>spring-aiact-spring-boot-starter</artifactId>
             <version>${spring-aiact.version}</version>
         </dependency>
 
         <dependency>
-            <groupId>com.iambilotta.gdpr</groupId>
+            <groupId>com.github.iambilotta.spring-gdpr</groupId>
             <artifactId>spring-gdpr-starter</artifactId>
             <version>${spring-gdpr.version}</version>
         </dependency>
         <dependency>
-            <groupId>com.iambilotta.gdpr</groupId>
+            <groupId>com.github.iambilotta.spring-gdpr</groupId>
             <artifactId>spring-gdpr-annotations</artifactId>
             <version>${spring-gdpr.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
         </dependency>
     </dependencies>
 
@@ -76,7 +118,7 @@
                     <parameters>true</parameters>
                     <annotationProcessorPaths>
                         <path>
-                            <groupId>com.iambilotta.gdpr</groupId>
+                            <groupId>com.github.iambilotta.spring-gdpr</groupId>
                             <artifactId>spring-gdpr-processor</artifactId>
                             <version>${spring-gdpr.version}</version>
                         </path>
@@ -85,20 +127,60 @@
             </plugin>
 
             <plugin>
-                <groupId>com.iambilotta.spring</groupId>
-                <artifactId>spring-aiact-maven-plugin</artifactId>
-                <version>${spring-aiact.version}</version>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-failsafe-plugin</artifactId>
                 <executions>
                     <execution>
-                        <id>aiact-verify-and-generate</id>
-                        <phase>verify</phase>
                         <goals>
+                            <goal>integration-test</goal>
                             <goal>verify</goal>
-                            <goal>generate</goal>
                         </goals>
                     </execution>
                 </executions>
             </plugin>
+
         </plugins>
     </build>
+
+    <profiles>
+        <!--
+          The spring-aiact Maven plugin can verify the high-risk class annotations and
+          generate the Annex IV technical file, the Article 47 DoC PDF and the dataset
+          datasheets at `mvn verify`. We cannot wire it into the default reactor here
+          because JitPack rewrites the plugin's groupId from `com.iambilotta.spring` to
+          `com.github.iambilotta.spring-aiact`, which makes Maven reject the plugin
+          descriptor as inconsistent.
+
+          Workaround for users who want the build-time artifacts:
+
+            1. clone https://github.com/iambilotta/spring-aiact next to this repo,
+            2. run `( cd ../spring-aiact && ./mvnw -B -DskipTests install )`,
+            3. run `mvn -P aiact-build-artifacts verify` from this repo.
+
+          The runtime side (audit chain, REST endpoints, integration tests) does NOT
+          need the plugin; it works straight from JitPack.
+        -->
+        <profile>
+            <id>aiact-build-artifacts</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>com.iambilotta.spring</groupId>
+                        <artifactId>spring-aiact-maven-plugin</artifactId>
+                        <version>1.0.0</version>
+                        <executions>
+                            <execution>
+                                <id>aiact-verify-and-generate</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>verify</goal>
+                                    <goal>generate</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 </project>

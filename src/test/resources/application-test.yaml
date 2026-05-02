@@ -1,0 +1,41 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:demo-test;DB_CLOSE_DELAY=-1
+    username: sa
+    password: ""
+    driver-class-name: org.h2.Driver
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+  gdpr:
+    enabled: true
+    web:
+      base-path: /gdpr
+    audit:
+      jdbc-enabled: true
+      table: gdpr_audit_access
+      auto-create-schema: true
+      async:
+        enabled: false
+    retention:
+      enabled: false
+    erasure:
+      rest-enabled: true
+
+aiact:
+  hmac:
+    secret: test-only-fixed-secret-for-deterministic-hashing-32bytes
+  log-dir: target/test-aiact-logs
+  retention: P10Y
+  audit:
+    single-writer-lock: true
+  endpoints:
+    enabled: true
+    base-path: /aiact
+    allow-without-guard: true
+  retention-sweeper:
+    enabled: false
+
+logging:
+  level:
+    com.iambilotta: WARN

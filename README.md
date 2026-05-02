@@ -1,47 +1,85 @@
-# iambilotta-compliance-demo
+# spring-gdpr-aiact-demo
 
-End-to-end demo of [`spring-aiact`](https://github.com/iambilotta/spring-aiact) and [`spring-gdpr`](https://github.com/iambilotta/spring-gdpr) running together inside a single Spring Boot 3.5 service.
+> **End-to-end demo** of [`spring-aiact`](https://github.com/iambilotta/spring-aiact) and [`spring-gdpr`](https://github.com/iambilotta/spring-gdpr) running together inside a single Spring Boot 3.5 service. One JPA entity, one AI Act high-risk service, one runnable jar, three integration tests that pin the libraries' observable behaviour.
 
-The point of this repo is to show **what each library actually produces**, build-time and runtime, on a 200-line app, in under two minutes. Output is captured below verbatim from a real run.
+[![ci](https://github.com/iambilotta/spring-gdpr-aiact-demo/actions/workflows/ci.yml/badge.svg)](https://github.com/iambilotta/spring-gdpr-aiact-demo/actions/workflows/ci.yml)
+[![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
+[![Java](https://img.shields.io/badge/java-21%2B-orange.svg)](https://adoptium.net/)
+[![Spring Boot](https://img.shields.io/badge/spring--boot-3.5%2B-6db33f.svg)](https://spring.io/projects/spring-boot)
+[![spring-aiact](https://jitpack.io/v/iambilotta/spring-aiact.svg?label=spring-aiact)](https://jitpack.io/#iambilotta/spring-aiact)
+[![spring-gdpr](https://jitpack.io/v/iambilotta/spring-gdpr.svg?label=spring-gdpr)](https://jitpack.io/#iambilotta/spring-gdpr)
+
+---
+
+## Why this repo exists
+
+If you read [`spring-aiact`](https://github.com/iambilotta/spring-aiact) and [`spring-gdpr`](https://github.com/iambilotta/spring-gdpr) and wondered "does this actually do what the README claims", this repo is the answer. It boots both libraries on `:8080`, persists to in-memory H2, and ships three integration tests that assert the libraries' observable output against the upstream `v1.0.0` artifacts pulled from JitPack.
+
+Output captured below comes verbatim from a real run.
 
 ---
 
 ## What this app is
 
 - One JPA entity (`Customer`) annotated with `@GdprDataSubjects` / `@GdprLegalBasis` / `@GdprRetention` / `@GdprErasable` / `@GdprPersonalData`.
-- One AI Act high-risk service (`HiringScreener`) annotated with `@AiActHighRiskSystem` and the four companions, plus `@AiActLog` on the scoring method.
-- One `ErasureHandler` bean for Customer (deletes by id, audited).
-- H2 in-memory DB. No Postgres, no docker-compose. Purpose is showing the libraries, not infrastructure.
+- One AI Act high-risk service (`HiringScreener`) annotated with `@AiActHighRiskSystem`, `@AiActIntendedPurpose`, `@AiActOversight`, `@AiActDataset`, `@AiActAccuracyMetric`, plus `@AiActLog` on the scoring method.
+- One `ErasureHandler` bean for `Customer` (deletes by id, audited).
+- H2 in-memory DB. No Postgres, no docker-compose. The point is to show the libraries, not infrastructure.
 
 ```
-┌────────── build time (mvn verify) ──────────┐  ┌──── runtime (Spring Boot) ────┐
-│ spring-gdpr-processor → ropa.csv, dpia.md   │  │ AOP advisor on @AiActLog       │
-│ spring-aiact-maven-plugin →                 │  │ AOP advisor on @GdprPersonalData│
-│   technical-file.md, doc.pdf, datasheets    │  │ /aiact/log/{verify,head,export}│
-└─────────────────────────────────────────────┘  │ /gdpr/audit/access             │
-                                                 │ /gdpr/erasure/{subjectId}      │
-                                                 └────────────────────────────────┘
+┌───────────── build time (mvn compile) ─────────────┐  ┌──── runtime (Spring Boot) ────┐
+│ spring-gdpr-processor → ropa.csv, dpia.md          │  │ AOP advisor on @AiActLog       │
+│ aiact-build-artifacts profile (opt-in, see below): │  │ AOP advisor on @GdprPersonalData│
+│   technical-file.md, doc.pdf, datasheets           │  │ /aiact/log/{verify,head,export}│
+└────────────────────────────────────────────────────┘  │ /gdpr/audit/access             │
+                                                        │ /gdpr/erasure/{subjectId}      │
+                                                        └────────────────────────────────┘
 ```
 
 ## Run it
 
 ```bash
-# 1. Install both libraries to your local Maven repo (they are not on Maven Central yet)
-git clone git@github.com:iambilotta/spring-aiact.git ../spring-aiact
-git clone git@github.com:iambilotta/spring-gdpr.git ../spring-gdpr
-( cd ../spring-aiact && ./mvnw -B -DskipTests install )
-( cd ../spring-gdpr  && ./mvnw -B -DskipTests install )
-
-# 2. Build the demo. The mvn verify phase invokes both generators and the aiact verify goal.
-mvn -B -DskipTests clean package
-
-# 3. Run.
-java -jar target/iambilotta-compliance-demo-0.1.0-SNAPSHOT.jar
+git clone git@github.com:iambilotta/spring-gdpr-aiact-demo.git
+cd spring-gdpr-aiact-demo
+mvn -B verify              # builds, runs integration tests against upstream v1.0.0 from JitPack
+java -jar target/spring-gdpr-aiact-demo-1.0.0.jar
 ```
 
 App binds on `:8080`. Audit logs written under `./aiact-logs/`. H2 console at `/h2-console`.
 
-> **Library coordinates.** The demo depends on the locally-installed `com.iambilotta.spring:*:0.1.1` and `com.iambilotta.gdpr:*:0.1.1`. To use the public JitPack distribution instead, swap the groupIds to `com.github.iambilotta.spring-aiact` and `com.github.iambilotta.spring-gdpr` and the version to `v0.1.1` (with the `v` prefix).
+The first build downloads the upstream libraries from JitPack:
+
+```
+com.github.iambilotta.spring-aiact:spring-aiact-spring-boot-starter:v1.0.0
+com.github.iambilotta.spring-gdpr:spring-gdpr-starter:v1.0.0
+com.github.iambilotta.spring-gdpr:spring-gdpr-annotations:v1.0.0
+```
+
+JitPack lazily builds these on the first request, which can take a couple of minutes the first time only. Subsequent builds are instant.
+
+### Optional: build-time artifacts (Annex IV technical file, Article 47 DoC PDF, dataset datasheets)
+
+The `spring-aiact-maven-plugin` cannot run via JitPack (JitPack rewrites the plugin's groupId, which Maven rejects as inconsistent in the plugin descriptor). To exercise the build-time generators:
+
+```bash
+git clone https://github.com/iambilotta/spring-aiact ../spring-aiact
+( cd ../spring-aiact && ./mvnw -B -DskipTests install )   # publishes the plugin to your local Maven repo
+mvn -P aiact-build-artifacts verify                       # generates target/generated-docs/*
+```
+
+Output (artifact filenames) is shown further down in the [build-time evidence](#what-mvn-verify-produces-build-time-evidence) section.
+
+## The integration tests are the load-bearing claim
+
+The `src/test/java` tree contains three Spring Boot integration tests. **Each test asserts an observable result of the upstream libraries**, not the demo's own glue. This is what makes the demo a continuous heartbeat against `spring-aiact` and `spring-gdpr`: if either library starts misbehaving in a future Spring Boot upgrade, refactor or annotation rename, these tests go red.
+
+| Test | What it pins |
+|---|---|
+| [`AiActAuditChainIT`](src/test/java/com/iambilotta/demo/AiActAuditChainIT.java) | One POST to `/hiring/score` appends one record to the NDJSON HMAC chain, and `/aiact/log/verify` reports `inspected: >=1, invalid: 0`. Three POSTs advance the chain head HMAC away from the seed. |
+| [`GdprAuditAndErasureIT`](src/test/java/com/iambilotta/demo/GdprAuditAndErasureIT.java) | Reading a `Customer` fires the GDPR advisor, and the access record is queryable through `/gdpr/audit/access` (Article 15). `DELETE /gdpr/erasure/{id}` returns the affected-by-type map, the row is gone, and the next read 404s. |
+| [`TamperEvidenceIT`](src/test/java/com/iambilotta/demo/TamperEvidenceIT.java) | After one logged invocation, the NDJSON file exists with `snake_case` keys (regression for the v0.1.x ObjectMapper-shadowing bug, closed in `spring-aiact` v1.0.0). Flipping one byte of `input_hash` makes `/aiact/log/verify` return `invalid: >=1` with the failed event id; restoring the byte returns `invalid: 0`. |
+
+Run them: `mvn verify`. CI runs them on every push and PR against Java 21 and Java 25.
 
 ---
 
@@ -61,8 +99,6 @@ com.iambilotta.demo.Customer,customer,6(1)(b),P5Y,ANONYMIZE,false
 ```markdown
 # Data Protection Impact Assessment (Art. 35) Scaffold
 
-Generated by spring-gdpr-processor. Review every section before submission.
-
 ## 1. Records of processing activities (Art. 30)
 
 | Entity | Data subjects | Legal basis | Retention | Strategy | Special category |
@@ -78,14 +114,12 @@ Generated by spring-gdpr-processor. Review every section before submission.
 
 ## 3. Necessity and proportionality assessment
 (Fill in.)
-## 4. Risks to rights and freedoms of data subjects
-(Fill in.)
 ...
 ```
 
 Sections 1-2 are populated mechanically. Sections 3-6 are deliberately empty: those are human judgement.
 
-### `target/generated-docs/hiring-screener-technical-file.md` (excerpt)
+### `target/generated-docs/hiring-screener-technical-file.md` (excerpt, requires the `aiact-build-artifacts` profile)
 
 ```markdown
 # Technical File, AI Act Annex IV
@@ -95,7 +129,6 @@ System id:       hiring-screener
 Provider:        iambilotta demo
 Version:         0.1.0
 Annex III:       III.4 (EMPLOYMENT_AND_WORKERS_MANAGEMENT), sub-point 4(a)
-Generated at:    2026-05-02T09:33:54Z
 
 ## 1. General description
 Intended purpose: Score CV applicants for an engineering role.
@@ -111,7 +144,6 @@ Foreseeable misuse: Auto-rejection without human review; Use outside the enginee
 ### Article 14 human oversight
 - Level: HUMAN_IN_THE_LOOP
 - Override role: hr
-- Description: Every output is reviewed by an HR specialist before action.
 
 ## 3. Datasets and data governance
 | Id              | Name                       | Phase    | Source                | Size           | Personal data | Documented biases                       |
@@ -123,7 +155,7 @@ Foreseeable misuse: Auto-rejection without human review; Use outside the enginee
 
 Plus `hiring-screener-doc.pdf` (Article 47 Declaration of Conformity, signature placeholder) and `hiring-screener-dataset-cv-corpus-2025.md` (Article 10 dataset datasheet).
 
-The `mvn verify` goal also fails the build with a precise message if any of the four AI Act companion annotations is missing on a class marked `@AiActHighRiskSystem`. Try removing `@AiActOversight` from `HiringScreener.java` and re-running: build red.
+The `mvn verify` goal under the `aiact-build-artifacts` profile also fails the build with a precise message if any of the four AI Act companion annotations is missing on a class marked `@AiActHighRiskSystem`. Try removing `@AiActOversight` from `HiringScreener.java` and re-running: build red.
 
 ---
 
@@ -208,10 +240,6 @@ $ curl 'http://localhost:8080/gdpr/audit/access?subjectId=sub-42'
   {"eventId":"080383ae-8778-4e6a-9781-9a9970211590","at":"2026-05-02T09:34:49.991133Z",
    "actor":"system","subjectId":"sub-42",
    "targetType":"com.iambilotta.demo.CustomerService","targetMember":"read",
-   "legalBasis":null,"specialCategory":false},
-  {"eventId":"81b6c31a-a523-4fd1-95e1-9c066bc5977f","at":"2026-05-02T09:35:06.948498Z",
-   "actor":"system","subjectId":"sub-42",
-   "targetType":"com.iambilotta.demo.CustomerService","targetMember":"read",
    "legalBasis":null,"specialCategory":false}
 ]
 ```
@@ -224,7 +252,7 @@ $ curl -X DELETE http://localhost:8080/gdpr/erasure/sub-42
 
 # Re-read fails: the row is gone
 $ curl -o /dev/null -w '%{http_code}\n' http://localhost:8080/customers/sub-42
-500
+404
 ```
 
 The `affectedByType` map is built by the library: it walks every registered `ErasureHandler`, calls `erase(subjectId)`, sums the counts and audits each step. In this demo there is one handler (`CustomerErasureHandler`); a real app would register one per table holding personal data, and the library would handle ordering and audit on each call.
@@ -233,13 +261,19 @@ The `affectedByType` map is built by the library: it walks every registered `Era
 
 ## What this demo deliberately does NOT show
 
-- Production Spring Security wiring around `/aiact/**` and `/gdpr/**`. Both libraries default-deny in production but the demo runs `allow-without-guard: true` and no DPO role on `/gdpr/**`.
-- HMAC secret rotation. The HMAC secret is a dev placeholder. Production-grade rotation is described in `spring-aiact/docs/PRODUCTION.md`.
+- Production Spring Security wiring around `/aiact/**` and `/gdpr/**`. Both libraries default-deny in production but the demo runs with `aiact.endpoints.allow-without-guard=true` and no `DPO` role on `/gdpr/**`.
+- HMAC secret rotation. The HMAC secret in `application.yaml` is a dev placeholder. Production-grade rotation is described in `spring-aiact/docs/PRODUCTION.md`.
 - A persistent DB. H2 is in-memory and resets on restart.
 - Multi-pod single-writer-lock semantics. One JVM, one writer.
 
 These are real concerns for a production deployment, just out of scope for a 200-line demo.
 
-## Licence
+## Contributing, security, code of conduct
 
-The demo itself is unlicensed (private), the two libraries it integrates are Apache 2.0.
+- [`CONTRIBUTING.md`](CONTRIBUTING.md): what belongs here vs upstream, coding conventions, PR flow, DCO.
+- [`SECURITY.md`](SECURITY.md): how to report a vulnerability (do not open a public issue).
+- [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md): Contributor Covenant 2.1.
+
+## License
+
+Apache License 2.0. See [LICENSE](LICENSE). The two libraries integrated by this demo are also Apache 2.0.
